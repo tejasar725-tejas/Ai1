@@ -1,128 +1,126 @@
 # 🍳 Recipe Step Autocompleter
 
-> A Command Line Interface (CLI) tool that helps home cooks autocomplete incomplete recipe instructions, ensuring smooth cooking and baking experiences.
-
-[![CI](https://github.com/example/recipe-step-autocompleter/actions/workflows/ci.yml/badge.svg)](https://github.com/example/recipe-step-autocompleter)
-[![Python 3.12+](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+A command-line tool that helps home cooks autocomplete incomplete recipe instructions, ensuring smooth cooking and baking experiences.
 
 ---
 
 ## 📖 Overview
 
-Cooking often involves multi-step processes where home cooks forget the exact next action or measurement (e.g., *"Heat olive oil in a..."*, *"Preheat oven to..."*, or *"Whisk together the flour,..."*). 
+Cooking often involves multi-step recipes where home cooks forget the exact next step, measurement, or cooking technique (e.g., *"Heat olive oil in a..."*, *"Preheat oven to..."*, or *"Whisk together the flour,..."*). 
 
-**Recipe Step Autocompleter** compiles a domain-specific corpus of culinary instructions, calculates n-gram statistics with Maximum-Likelihood Estimation (MLE), applies smoothing techniques (Laplace, Lidstone, and Backoff), and generates natural, coherent continuations.
-
-The tool includes:
-- A statistical **N-Gram Language Model** ($n=2, 3, 4$) with Laplace (Add-1), Lidstone (Add-k), and Backoff smoothing.
-- Robust culinary **text preprocessing and tokenization** (handling vulgar fractions like `½`, temperature ranges, units, and contractions).
-- Controllable **decoding strategies** (deterministic greedy, temperature sampling, top-k candidate filtering, and repetition/cycle suppression).
-- A feature-rich **CLI** supporting single completions, multi-phrase candidate generation, interactive shell mode (`Chef >`), corpus statistics, and model perplexity evaluation.
-- Optional **LLM hybrid integration** supporting Gemini, Groq, Ollama, or mock fallbacks via `.env`.
+**Recipe Step Autocompleter** addresses this by:
+1. Compiling a domain-specific corpus of recipe instructions.
+2. Building an **$N$-Gram Language Model** with Maximum-Likelihood Estimation (MLE) and smoothing (Laplace, Lidstone, and Backoff).
+3. Generating natural, grammatically correct step continuations using greedy and temperature-scaled sampling.
+4. Providing an intuitive **CLI** for real-time suggestions, multi-candidate completions, and interactive shell mode.
 
 ---
 
-## 📂 Project Structure
+## 📂 Repository File Structure
+
+The project is organized directly at the repository root into the `app/` package, `data/` directory, and `tests/` suite:
 
 ```
-recipe-step-autocompleter/
-├── .env.example              # Template configuration for LLM providers & defaults
-├── .env                      # Active environment configuration
-├── .gitignore                # Git ignore rules for Python & environments
-├── .github/
-│   └── workflows/
-│       └── ci.yml            # CI test runner matrix (Python 3.12 & 3.13)
-├── README.md                 # Complete documentation & usage guide
-├── pytest.ini                # Pytest configuration and test options
-├── requirements.txt          # Python dependencies
-├── data/
-│   └── recipes.txt           # Curated corpus of authentic cooking steps
+.
 ├── app/
 │   ├── __init__.py           # Package exports and version metadata
-│   ├── cli.py                # Command Line Interface (hello, autocomplete, interactive, etc.)
-│   ├── core.py               # Preprocessing, tokenization, N-Gram model, MLE & smoothing
-│   ├── llm.py                # Optional LLM providers (Gemini, Groq, Ollama, Mock)
-│   └── storage.py            # Corpus loading, file management, model serialization
-└── tests/
-    ├── __init__.py
-    ├── test_smoke.py         # Smoke tests (CLI hello, basic imports, fallback sanity)
-    └── test_core.py          # 30+ unit tests covering all milestones & stretch goals
+│   ├── cli.py                # CLI commands: hello, autocomplete, interactive, stats, add
+│   ├── core.py               # Preprocessing, tokenization, N-Gram model, MLE, smoothing & sampling
+│   ├── llm.py                # Optional LLM integration (Gemini, Groq, Ollama, Mock fallback)
+│   └── storage.py            # Corpus loading, dataset persistence, model artifact serialization
+├── data/
+│   └── recipes.txt           # Primary recipe instruction dataset (86 curated steps)
+├── tests/
+│   ├── __init__.py
+│   ├── test_smoke.py         # Smoke tests (CLI hello, basic imports, fallback sanity)
+│   └── test_core.py          # 37 unit tests covering all milestones & stretch goals
+├── .env.example              # Template configuration for model settings & optional API keys
+├── .github/
+│   └── workflows/
+│       └── ci.yml            # Automated CI workflow on GitHub Actions
+├── .gitignore                # Git ignore patterns for Python, venv, and cache
+├── pytest.ini                # Pytest configuration and test options
+├── requirements.txt          # Pinned dependency specifications
+└── README.md                 # Complete documentation, data details, and run instructions
 ```
 
 ---
 
-## 🎯 Milestones & Capabilities
+## 📊 Dataset & Corpus
 
-- [x] **Milestone 1: Compile a corpus of cooking recipe instructions**
-  - Text normalization: converts unicode fractions (`½` $\to$ `1/2`), standardizes quotes/dashes, trims whitespace, handles casing.
-  - Culinary tokenization: preserves fractions (`1/2`), contractions (`don't`), measurements, and separates punctuation.
-  - Sentence padding (`<s>`, `</s>`) and out-of-vocabulary (`<unk>`) token mapping.
-  - Detokenization: formats punctuation spacing and capitalizes sentences.
-- [x] **Milestone 2: Implement N-gram counting and maximum-likelihood probabilities with smoothing**
-  - Flexible n-gram counter supporting arbitrary orders ($n=1, 2, 3, 4$).
-  - Maximum-Likelihood Estimation ($P_{MLE} = C(c, w) / C(c)$).
-  - Laplace (Add-1) smoothing ($P_{Laplace} = \frac{C(c, w) + 1}{C(c) + |V|}$).
-  - Lidstone (Add-k) smoothing ($P_{Lidstone} = \frac{C(c, w) + k}{C(c) + k|V|}$).
-  - Stupid Backoff smoothing backing down from trigram $\to$ bigram $\to$ unigram with discount $\alpha=0.4$.
-- [x] **Milestone 3: Generate recipe step continuations**
-  - Next-word distribution calculation and top-k candidate ranking.
-  - Greedy decoding (deterministic argmax) and stochastic temperature sampling.
-  - Repetition and cycle suppression to prevent degenerate loops.
-  - Termination criteria on end-of-step token `</s>` or terminal punctuation (`.`, `!`).
-- [x] **Milestone 4: Build a functional CLI for user interaction**
-  - `hello` command: greets user and prints model diagnostics.
-  - `autocomplete` command: accepts partial recipe steps and generates continuations.
-  - `interactive` command: interactive REPL session (`Chef >`).
-  - `stats` command: displays corpus stats and perplexity metrics.
-  - `add` command: adds new recipe instructions to the active corpus.
-- [x] **Stretch Ideas**
-  - **Multiple suggestions**: Generate $k$ distinct alternative continuations (`-k 3`).
-  - **Customizable length**: Set suggestion length in words (`-l 12`).
-  - **Smoothing exploration**: Switch smoothing methods on the fly (`-s laplace|lidstone|backoff|mle`).
-  - **Perplexity evaluation**: Quantitatively assess model quality across smoothing methods.
+The model trains on authentic culinary instructions stored at `data/recipes.txt`.
+
+- **Location**: `data/recipes.txt`
+- **Format**: UTF-8 plain text, one complete cooking instruction per line.
+- **Corpus Size**: 86 curated recipe instructions containing 1,546 words across 485 unique vocabulary tokens.
+- **Techniques Covered**:
+  - *Sautéing & Pan-frying*: olive oil, butter, garlic, onions, mushrooms, searing proteins.
+  - *Boiling & Pasta*: boiling salted water, pasta al dente, reserving pasta water.
+  - *Baking & Roasting*: oven temperatures (350°F–425°F), flour, baking powder, folding batter.
+  - *Soups, Stews & Sauces*: broth simmering, rouxs, heavy cream, reduction.
+  - *Seasoning & Garnishing*: kosher salt, freshly cracked pepper, herbs, citrus.
+  - *Dressings & Marinades*: vinaigrettes, whisking marinades, resting cooked meats.
+- **Custom Corpora**: Users can provide their own recipe files using the `--corpus` flag:
+  ```bash
+  python -m app.cli autocomplete "Heat olive oil" --corpus path/to/my_recipes.txt
+  ```
+- **Fallback Guarantee**: If `data/recipes.txt` is absent, `app/storage.py` automatically restores the built-in corpus, ensuring zero-configuration execution.
 
 ---
 
-## 🚀 Quick Start
+## 📦 Pinned Dependencies
 
-### 1. Prerequisites & Installation
+Dependencies are strictly pinned in `requirements.txt`:
 
-Requires **Python 3.12+** and `git`.
+| Package | Pinned Version | Purpose |
+|---|---|---|
+| `pytest` | `9.2.0` | Test runner and test suite execution |
+| `python-dotenv` | `1.2.4` | Loads configuration from `.env` |
+| `requests` | `2.34.2` | Optional HTTP client for external LLM endpoints |
 
+Install them using:
 ```bash
-# Clone the repository
-git clone https://github.com/example/recipe-step-autocompleter.git
-cd recipe-step-autocompleter
-
-# Create virtual environment and activate
-python -m venv .venv
-source .venv/bin/activate      # On Linux/macOS
-# or .\.venv\Scripts\activate   # On Windows
-
-# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
+---
 
-Copy the example configuration file:
+## 🚀 How to Run
 
+All commands are executed from the **repository root**:
+
+### Step 1: Set Up Python Environment
+Requires **Python 3.12** or **3.13**:
 ```bash
-cp .env.example .env
+# On Linux / macOS:
+python3.12 -m venv .venv
+source .venv/bin/activate
+
+# On Windows:
+python -m venv .venv
+.\.venv\Scripts\activate
 ```
 
-To enable optional LLM hybrid completion (e.g., Gemini, Groq, or Ollama), edit `.env` and set `LLM_PROVIDER` and your API key. If left as `none`, the tool runs purely on the statistical n-gram model.
+### Step 2: Install Pinned Dependencies
+```bash
+pip install -r requirements.txt
+```
 
-### 3. Verify Installation
+### Step 3: Copy Environment Configuration
+```bash
+# On Linux / macOS:
+cp .env.example .env
 
-Run the greeting command:
+# On Windows:
+copy .env.example .env
+```
+*(By default, `LLM_PROVIDER=none`, meaning the tool runs purely offline on the statistical $N$-gram model. To enable optional LLM hybrid completion, see `.env.example`.)*
 
+### Step 4: Run the CLI Greeting & Health Check
 ```bash
 python -m app.cli hello
 ```
-
-Expected output:
+**Expected Output:**
 ```
 =================================================================
  🍳 Recipe Step Autocompleter CLI - Welcome Home Chef! 🍳
@@ -141,17 +139,11 @@ Quick Start Examples:
 =================================================================
 ```
 
----
-
-## 💻 CLI Usage Guide
-
-### Autocomplete a Partial Recipe Step
-
+### Step 5: Autocomplete a Recipe Step
 ```bash
 python -m app.cli autocomplete "Heat olive oil in a"
 ```
-
-Output:
+**Actual Output:**
 ```
 =================================================================
 Input Partial Step: "Heat olive oil in a"
@@ -166,16 +158,22 @@ Complete Recipe Step:
 =================================================================
 ```
 
-### Suggest Multiple Alternatives (Stretch Goal 1)
+---
 
-Generate 3 distinct suggestions with `-k 3`:
+## 💡 Advanced CLI Features & Stretch Goals
 
+### 1. Suggest Multiple Distinct Continuations (`-k`)
+Generate multiple diverse alternative steps for the cook:
 ```bash
 python -m app.cli autocomplete "Preheat oven to" --length 12 -k 3
 ```
-
-Output:
+**Actual Output:**
 ```
+=================================================================
+Input Partial Step: "Preheat oven to"
+Model: 3-gram | Smoothing: laplace | Length: 12 words
+=================================================================
+
 Top 3 Suggestions:
 
   [1] Continuation: 375 degrees f (190 degrees c) and grease a 9x13-inch
@@ -186,43 +184,32 @@ Top 3 Suggestions:
 
   [3] Continuation: 400 degrees f.
       Full Step   : Preheat oven to 400 degrees f.
+=================================================================
 ```
 
-### Specify Suggestion Length (Stretch Goal 2)
-
-Control the continuation length with `-l <words>`:
-
+### 2. Configure Suggestion Length (`-l`)
+Control the length in words of the generated continuation:
 ```bash
-# Short 4-word continuation
+# Short 4-word continuation:
 python -m app.cli autocomplete "Whisk together the" -l 4
 
-# Longer 15-word continuation
-python -m app.cli autocomplete "Whisk together the" -l 15
+# Longer 14-word continuation:
+python -m app.cli autocomplete "Whisk together the" -l 14
 ```
 
-### Select Smoothing Method (Stretch Goal 3)
-
-Compare different smoothing techniques using `-s`:
-
+### 3. Choose Smoothing Technique (`-s`)
+Select between **Laplace**, **Lidstone**, or **Backoff** smoothing:
 ```bash
-# Laplace (Add-1) smoothing
-python -m app.cli autocomplete "Melt butter in a" -s laplace
-
-# Lidstone (Add-k) smoothing
-python -m app.cli autocomplete "Melt butter in a" -s lidstone
-
-# Stupid Backoff smoothing
-python -m app.cli autocomplete "Melt butter in a" -s backoff
+python -m app.cli autocomplete "Melt unsalted butter in a" -s backoff
+python -m app.cli autocomplete "Melt unsalted butter in a" -s lidstone
+python -m app.cli autocomplete "Melt unsalted butter in a" -s laplace
 ```
 
-### Interactive Chef Mode
-
-Launch the interactive REPL where you can type prompts interactively:
-
+### 4. Interactive Chef Shell (`interactive`)
+An interactive REPL session for home cooks:
 ```bash
 python -m app.cli interactive
 ```
-
 ```text
 Chef > Bring a large pot of
 --------------------------------------------------
@@ -235,15 +222,11 @@ Chef > exit
 Goodbye and happy cooking!
 ```
 
-### View Corpus Statistics & Perplexity
-
-Inspect token counts, vocabulary size, and perplexity across smoothing methods:
-
+### 5. Inspect Model Stats & Perplexity (`stats`)
 ```bash
 python -m app.cli stats
 ```
-
-Output:
+**Actual Output:**
 ```
 =================================================================
  📊 Recipe Corpus & N-Gram Model Statistics 📊
@@ -263,61 +246,72 @@ Perplexity Evaluation (lower is better):
 =================================================================
 ```
 
-### Add New Recipe Instructions to Corpus
-
+### 6. Add Custom Recipe Steps (`add`)
 ```bash
-python -m app.cli add "Simmer marinara sauce over low heat for 30 minutes."
+python -m app.cli add "Simmer marinara sauce gently over low heat for 30 minutes."
 ```
 
 ---
 
-## 📐 Mathematical Formulation
+## 📐 Mathematical Formulation & Evaluation
 
 ### 1. Maximum-Likelihood Estimation (MLE)
-Given context $c = (w_{i-n+1}, \dots, w_{i-1})$:
-$$P_{MLE}(w_i \mid c) = \frac{C(c, w_i)}{C(c)}$$
+For context $c = (w_{i-n+1}, \dots, w_{i-1})$:
+$$P_{\text{MLE}}(w_i \mid c) = \frac{C(c, w_i)}{C(c)}$$
 
 ### 2. Laplace (Add-1) Smoothing
-Adds pseudo-count of 1 to every word in vocabulary $V$:
-$$P_{Laplace}(w_i \mid c) = \frac{C(c, w_i) + 1}{C(c) + |V|}$$
+Ensures non-zero probabilities for all vocabulary words $w \in V$:
+$$P_{\text{Laplace}}(w_i \mid c) = \frac{C(c, w_i) + 1}{C(c) + |V|}$$
+*(Sum over all $w \in V$ equals $1.0$.)*
 
 ### 3. Lidstone (Add-k) Smoothing
 Adds pseudo-count $k \in (0, 1]$ (default $k=0.5$):
-$$P_{Lidstone}(w_i \mid c) = \frac{C(c, w_i) + k}{C(c) + k|V|}$$
+$$P_{\text{Lidstone}}(w_i \mid c) = \frac{C(c, w_i) + k}{C(c) + k|V|}$$
 
 ### 4. Stupid Backoff
-Recursively backs off to $(n-1)$-grams discounted by factor $\alpha = 0.4$:
+Recursively falls back to $(n-1)$-grams discounted by factor $\alpha = 0.4$:
 $$S(w_i \mid w_{i-k+1}^{i-1}) = \begin{cases} \frac{C(w_{i-k+1}^i)}{C(w_{i-k+1}^{i-1})} & \text{if } C(w_{i-k+1}^i) > 0 \\ \alpha \cdot S(w_i \mid w_{i-k+2}^{i-1}) & \text{otherwise} \end{cases}$$
 
-### 5. Perplexity (Evaluation Metric)
-Given a test sequence of $N$ tokens:
+### 5. Quantitative Model Comparison (Perplexity)
+Perplexity measures how well the probability distribution predicts held-out recipe sentences (lower is better):
 $$PP(W) = \exp\left( -\frac{1}{N} \sum_{i=1}^N \ln P(w_i \mid c_i) \right)$$
+
+On test recipe sentences:
+- **Laplace Smoothing**: $PP = 260.81$
+- **Lidstone Smoothing ($k=0.5$)**: $PP = 202.70$
+- **Stupid Backoff**: $PP = 13.35$
+
+### Limits & Boundary Conditions
+1. **Vocabulary Coverage**: Unseen out-of-vocabulary terms are mapped to `<unk>`.
+2. **Context Horizon**: A trigram model conditions on 2 preceding tokens. While highly coherent for common phrases, long-range dependencies across multiple sentences require higher $N$ or an LLM hybrid.
+3. **Corpus Domain**: The model is optimized for cooking instructions; non-culinary prompts fall back to general unigram/backoff distributions.
 
 ---
 
-## 🧪 Running Tests
+## 🧪 Testing
 
-Run the full automated test suite with pytest:
+Run the full automated test suite with `pytest`:
 
 ```bash
 pytest
 ```
 
-Run with verbose details:
+Run with verbose test case listing:
 ```bash
 pytest -v
 ```
 
-Run only smoke tests:
-```bash
-pytest tests/test_smoke.py
-```
+### Test Suite Structure
+- `tests/test_smoke.py`: Verifies module imports, CLI `hello` command, dataset loading, and LLM fallback handling.
+- `tests/test_core.py`: 37 unit tests covering:
+  - Text preprocessing (vulgar fractions, quotes, dashes).
+  - Culinary tokenization (contractions, fractions, punctuation).
+  - N-gram count validation and MLE probabilities.
+  - Probability distribution sums ($\sum P = 1.0$) for Laplace and Lidstone.
+  - Backoff smoothing hierarchy.
+  - Next-word ranking and greedy/temperature sampling.
+  - Continuation length and stopping criteria.
+  - Model serialization and deserialization.
+  - CLI argument handling and execution.
 
-All 37 unit and integration tests pass cleanly across platforms and Python 3.12/3.13.
-
----
-
-## 🤝 Contributing & License
-
-Contributions, extra recipe corpora, and new smoothing techniques are welcome!
-Licensed under the [MIT License](LICENSE).
+All 37 tests pass with zero failures.
