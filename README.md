@@ -1,3 +1,4 @@
+https://ask.thili.ai/api/v1/public/projects/CODE/badge.svg)](https://ask.thili.ai/b/CODE
 # 🍳 Recipe Step Autocompleter
 
 A command-line tool that helps home cooks autocomplete incomplete recipe instructions, ensuring smooth cooking and baking experiences.
